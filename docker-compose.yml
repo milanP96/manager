@@ -1,0 +1,58 @@
+version: "3"
+volumes:
+  pgdata:
+  static_files:
+  pgadmin:
+services:
+  python: &python
+    build:
+      context: .
+      dockerfile: docker/dev/python/Dockerfile
+    volumes:
+      - ./backend:/backend
+      - static_files:/static_files
+    depends_on: 
+      - postgres
+    ports:
+      - 8000:8000
+    environment:
+      HOST: 0.0.0.0
+    command: python manage.py runserver 0.0.0.0:8000
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: jp
+      POSTGRES_DB: jp
+      POSTGRES_PASS: jp
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - 5434:5432
+    restart: unless-stopped
+  nuxt:
+    build:
+      context: .
+      dockerfile: docker/dev/nuxt/Dockerfile
+    restart: always
+    working_dir: /src
+    volumes:
+      - ./frontend:/src
+    ports:
+      - 3000:3000
+    tty: true
+    environment:
+      HOST: 0.0.0.0
+    command: bash -c "rm -rf node_modules/ && rm -rf .nuxt/ && npm install && npm run dev"
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: jackpot
+      PGADMIN_DEFAULT_PASSWORD: jp
+    volumes:
+       - pgadmin:/root/.pgadmin
+    depends_on: 
+      - postgres
+    ports:
+      - "1111:80"
+    restart: unless-stopped
