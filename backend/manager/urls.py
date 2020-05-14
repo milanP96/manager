@@ -5,6 +5,7 @@ from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 router.register('organizations', views.OrganizationViewSet)
 router.register('tasks', views.TaskViewSet)
+router.register('users', views.UserViewSet)
 
 app_name = 'manager'
 

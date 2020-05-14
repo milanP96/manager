@@ -4,22 +4,38 @@ from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
 from django.utils.translation import ugettext_lazy as _
 from base.models import Organization, Wallet, Task
+from django.core.serializers.json import Serializer
+
+class OrganizationsSerializer(Serializer):
+    def get_dump_object(self, obj):
+        wallet = True if type(obj.wallet) == type(Wallet()) else False
+        mapped_object = {'name': obj.name, 'has_wallet': wallet, 'information': obj.information,
+                         'participants': obj.participants, 'notes_count': obj.notes_count}
+
+        return mapped_object
 
 
 class OrganizationSerializer(serializers.Serializer):
     """Serializer for the organization object"""
     name = serializers.CharField()
     wallet = serializers.BooleanField()
+    information = serializers.CharField()
+    users_uuid = serializers.ListField(child=serializers.UUIDField(), required=False)
 
     def save(self, user):
-        name = self.validated_data['name']
-        wallet = None
-        if self.validated_data['wallet']:
-            wallet = Wallet(amount=0)
-            wallet.save()
-        org = Organization(name=name, wallet=wallet)
-        org.save()
-        org.users.add(user)
+        try:
+            name = self.validated_data['name']
+            wallet = None
+            if self.validated_data['wallet']:
+                wallet = Wallet(amount=0)
+                wallet.save()
+            org = Organization(name=name, wallet=wallet, information="Info")
+            org.save()
+            users = [get_user_model().objects.get(uuid=uuid) for uuid in self.validated_data['users_uuid']] \
+                if 'users_uuid' in self.validated_data else [user]
+            org.users.add(*users)
+        except Exception as e:
+            print(e)
 
 
 class TaskSerializer(serializers.Serializer):
@@ -41,3 +57,7 @@ class TaskSerializer(serializers.Serializer):
             if 'users_uuid' in self.validated_data else [user]
         task.users.add(*users)
         return {'users': [{'uuid': u.uuid, 'name': u.name} for u in users], **self.validated_data}
+
+
+class FriendRequestSerializer(serializers.Serializer):
+    friend_uuid = serializers.UUIDField()

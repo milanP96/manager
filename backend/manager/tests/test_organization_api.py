@@ -46,18 +46,42 @@ class PrivateOrganizationApiTests(TestCase):
         serializer = OrganizationSerializer(organizations, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(dict(res.data)['results'], serializer.data)
+    #
+    # def test_fetch_my_organizations(self):
+    #     payload = {'name': self.user.name, 'information': 'Ovo je neka info', 'wallet': False}
+    #     self.client.post(ORGANIZATION_URL, payload)
+    #     res = self.client.get(ORGANIZATION_URL + 'my/')
+    #     print(type(res.data))
+    #     print(res.data['results'])
+
 
     def test_success_create_organization(self):
         """Test create a new organization"""
-        payload = {'name': 'Tester Tester'}
+        payload = {'name': 'Tester Tester', 'information': 'Ovo je neka info', 'wallet': True}
         self.client.post(ORGANIZATION_URL, payload)
-
         exists = Organization.objects.filter(name=payload['name']).exists()
         self.assertTrue(exists)
 
+    def test_success_create_organization_with_multiple_users(self):
+        """Test create a new organization with multiple users"""
+        user2 = get_user_model().objects.create_user(
+            'test2@test.te',
+            'Ime Korisnika',
+            'password123'
+        )
+        user2.save()
+        payload = {'name': 'Tester Tester', 'information': 'Ovo je neka info',
+                   'wallet': True, "users_uuid": [self.user.uuid, user2.uuid]}
+        self.client.post(ORGANIZATION_URL, payload)
+        organization = Organization.objects.get(name=payload['name'])
+        self.assertIn(self.user.uuid, [usr.uuid for usr in organization.users.all()])
+        self.assertIn(user2.uuid, [usr.uuid for usr in organization.users.all()])
+
+
+
     def test_success_create_organization_and_add_user(self):
         """Test create a new organization and adding current user to this organization"""
-        payload = {'name': self.user.name}
+        payload = {'name': self.user.name, 'information': 'Ovo je neka info', 'wallet': True}
         self.client.post(ORGANIZATION_URL, payload)
         org = Organization.objects.get(name=payload['name'])
         users = org.users.all()

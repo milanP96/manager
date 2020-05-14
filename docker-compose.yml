@@ -21,10 +21,11 @@ services:
   postgres:
     image: postgres:latest
     environment:
-      POSTGRES_USER: jp
-      POSTGRES_DB: jp
-      POSTGRES_PASS: jp
+      POSTGRES_USER: mn
+      POSTGRES_DB: mn
+      POSTGRES_PASS: mn
       POSTGRES_HOST_AUTH_METHOD: trust
+      TZ: Europe/Belgrade
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -47,8 +48,8 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     environment:
-      PGADMIN_DEFAULT_EMAIL: jackpot
-      PGADMIN_DEFAULT_PASSWORD: jp
+      PGADMIN_DEFAULT_EMAIL: mnadmin
+      PGADMIN_DEFAULT_PASSWORD: mn
     volumes:
        - pgadmin:/root/.pgadmin
     depends_on: 

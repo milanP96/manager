@@ -31,6 +31,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    friends = models.ManyToManyField("self", blank=True)
+    friend_requests = models.ManyToManyField("self", blank=True)
 
     objects = UserManager()
 
@@ -65,6 +67,7 @@ class Comment(models.Model):
 class Organization(models.Model):
     id = models.BigAutoField(primary_key=True, editable=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, null=False)
+    information = models.TextField(max_length=300, null=True, default=None)
     name = models.CharField(max_length=20, null=True, blank=True)
     users = models.ManyToManyField(User)
     wallet = models.ForeignKey(Wallet, to_field='uuid', on_delete=models.CASCADE, null=True)
@@ -90,6 +93,7 @@ class Task(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     status = models.CharField(max_length=200, choices=STATUSES)
     comments = models.ManyToManyField(Comment)
+    permanent = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
